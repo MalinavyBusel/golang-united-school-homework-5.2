@@ -23,7 +23,7 @@ func (receiver Cache) Get(key string) (string, bool) {
 		return "", ok
 	}
 
-	if !value.deadline.IsZero() && value.deadline.Before(time.Now()) {
+	if !value.deadline.IsZero() && !value.deadline.After(time.Now()) {
 		delete(receiver.hashMap, key)
 		return "", false
 	}
@@ -37,9 +37,11 @@ func (receiver *Cache) Put(key, value string) {
 
 func (receiver Cache) Keys() []string {
 	existingKeys := []string{}
-	for _, value := range receiver.hashMap {
-		if value.deadline.IsZero() || !value.deadline.Before(time.Now()) {
-			existingKeys = append(existingKeys, value.data)
+	for key, value := range receiver.hashMap {
+		if value.deadline.IsZero() || value.deadline.After(time.Now()) {
+			existingKeys = append(existingKeys, key)
+		} else {
+			delete(receiver.hashMap, key)
 		}
 	}
 	return existingKeys
